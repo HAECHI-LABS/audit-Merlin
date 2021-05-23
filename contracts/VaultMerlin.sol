@@ -27,7 +27,7 @@ contract VaultMerlin is VaultController, IStrategy, ReentrancyGuardUpgradeable {
 
     /* ========== STATE VARIABLES ========== */
 
-    uint public pid;
+    uint public constant pid;
     uint private _totalSupply;
     mapping(address => uint) private _balances;
     mapping(address => uint) private _depositedAt;
@@ -78,7 +78,7 @@ contract VaultMerlin is VaultController, IStrategy, ReentrancyGuardUpgradeable {
         return 1e18;
     }
 
-    function earned(address) override public view returns (uint) {
+    function earned(address) override external view returns (uint) {
         return 0;
     }
 
@@ -126,7 +126,7 @@ contract VaultMerlin is VaultController, IStrategy, ReentrancyGuardUpgradeable {
         emit MerlinPaid(msg.sender, merlinAmount, 0);
     }
 
-    function harvest() public override {
+    function harvest() external override {
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */

@@ -186,7 +186,7 @@ contract VaultLpToCake is VaultController, IStrategy, RewardsDistributionRecipie
         deposit(_stakingToken.balanceOf(msg.sender));
     }
 
-    function withdraw(uint amount) override public /* nonReentrant */ updateReward(msg.sender) {
+    function withdraw(uint amount) override public /* nonReentrant */ updateReward(msg.sender) nonContract {
         require(amount > 0, "VaultLpToCake: amount must be greater than zero");
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
@@ -208,7 +208,7 @@ contract VaultLpToCake is VaultController, IStrategy, RewardsDistributionRecipie
         _harvest();
     }
 
-    function withdrawAll() external override {
+    function withdrawAll() external override nonContract {
         uint _withdraw = withdrawableBalanceOf(msg.sender);
         if (_withdraw > 0) {
             withdraw(_withdraw);
@@ -216,7 +216,7 @@ contract VaultLpToCake is VaultController, IStrategy, RewardsDistributionRecipie
         getReward();
     }
 
-    function getReward() public override /* nonReentrant */ updateReward(msg.sender) {
+    function _getReward() private updateReward(msg.sender) {
         uint reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;
@@ -234,7 +234,11 @@ contract VaultLpToCake is VaultController, IStrategy, RewardsDistributionRecipie
         }
     }
 
-    function harvest() public override {
+    function getReward() external override nonContract {
+        _getReward();
+    }
+
+    function harvest() external override {
         CAKE_MASTER_CHEF.withdraw(pid, 0);
         _harvest();
     }
@@ -268,7 +272,7 @@ contract VaultLpToCake is VaultController, IStrategy, RewardsDistributionRecipie
         IBEP20(CAKE).safeApprove(newRewardsToken, uint(~0));
     }
 
-    function notifyRewardAmount(uint reward) public override onlyRewardsDistribution {
+    function notifyRewardAmount(uint reward) external override onlyRewardsDistribution {
         _notifyRewardAmount(reward);
     }
 

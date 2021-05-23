@@ -5,7 +5,7 @@ import "@pancakeswap/pancake-swap-lib/contracts/token/BEP20/BEP20.sol";
 
 contract MerlinToken is BEP20('Merlin Token', 'MERL') {
     /// @dev Creates `_amount` token to `_to`. Must only be called by the owner (MasterChef).
-    function mint(address _to, uint256 _amount) public onlyOwner {
+    function mint(address _to, uint256 _amount) external onlyOwner {
         _mint(_to, _amount);
         _moveDelegates(address(0), _delegates[_to], _amount);
     }

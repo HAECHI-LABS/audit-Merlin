@@ -60,7 +60,7 @@ contract VaultCakeToCake is VaultController, IStrategy {
         return balance().mul(sharesOf(account)).div(totalShares);
     }
 
-    function withdrawableBalanceOf(address account) public view override returns (uint) {
+    function withdrawableBalanceOf(address account) external view override returns (uint) {
         return balanceOf(account);
     }
 
@@ -98,7 +98,7 @@ contract VaultCakeToCake is VaultController, IStrategy {
     function deposit(uint _amount) public override {
         _deposit(_amount, msg.sender);
 
-        if (isWhitelist(msg.sender) == false) {
+        if (!isWhitelist(msg.sender)) {
             _principal[msg.sender] = _principal[msg.sender].add(_amount);
             _depositedAt[msg.sender] = block.timestamp;
         }
@@ -108,7 +108,7 @@ contract VaultCakeToCake is VaultController, IStrategy {
         deposit(CAKE.balanceOf(msg.sender));
     }
 
-    function withdrawAll() external override {
+    function withdrawAll() external override nonContract {
         uint amount = balanceOf(msg.sender);
         uint principal = principalOf(msg.sender);
         uint depositTimestamp = _depositedAt[msg.sender];
@@ -156,7 +156,7 @@ contract VaultCakeToCake is VaultController, IStrategy {
     }
 
     // @dev underlying only + withdrawal fee + no perf fee
-    function withdrawUnderlying(uint _amount) external {
+    function withdrawUnderlying(uint _amount) external nonContract {
         uint amount = Math.min(_amount, _principal[msg.sender]);
         uint shares = Math.min(amount.mul(totalShares).div(balance()), _shares[msg.sender]);
         totalShares = totalShares.sub(shares);
@@ -177,7 +177,7 @@ contract VaultCakeToCake is VaultController, IStrategy {
         _harvest(cakeHarvested);
     }
 
-    function getReward() external override {
+    function getReward() external override nonContract {
         uint amount = earned(msg.sender);
         uint shares = Math.min(amount.mul(totalShares).div(balance()), _shares[msg.sender]);
         totalShares = totalShares.sub(shares);

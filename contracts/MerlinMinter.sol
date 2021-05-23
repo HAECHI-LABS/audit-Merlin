@@ -142,7 +142,7 @@ contract MerlinMinter is IMerlinMinter, OwnableUpgradeable {
         return 0;
     }
 
-    function performanceFee(uint profit) public view override returns (uint) {
+    function performanceFee(uint profit) external view override returns (uint) {
         return profit.mul(PERFORMANCE_FEE).div(FEE_MAX);
     }
 
@@ -154,6 +154,8 @@ contract MerlinMinter is IMerlinMinter, OwnableUpgradeable {
             IBEP20(MERLIN).safeTransfer(DEAD, feeSum);
             return;
         }
+        (uint valueInBNB,) = priceCalculator.valueOfAsset(WBNB, amountBNB);
+        uint contribution = valueInBNB.mul(_performanceFee).div(feeSum);
 
         uint amountBNB = _zapAssetsToBNB(asset);
         if (amountBNB == 0) return;
@@ -161,8 +163,6 @@ contract MerlinMinter is IMerlinMinter, OwnableUpgradeable {
         IBEP20(WBNB).safeTransfer(MERLIN_POOL, amountBNB);
         IStakingRewards(MERLIN_POOL).notifyRewardAmount(amountBNB);
 
-        (uint valueInBNB,) = priceCalculator.valueOfAsset(WBNB, amountBNB);
-        uint contribution = valueInBNB.mul(_performanceFee).div(feeSum);
         uint mintMerlin = amountMerlinToMint(contribution);
         
         if (mintMerlin == 0) return;

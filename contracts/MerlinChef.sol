@@ -89,7 +89,7 @@ contract MerlinChef is IMerlinChef, OwnableUpgradeable {
         return vaultUsers[vault][user];
     }
 
-    function pendingMerlin(address vault, address user) public view override returns (uint) {
+    function pendingMerlin(address vault, address user) external view override returns (uint) {
         UserInfo storage userInfo = vaultUsers[vault][user];
         VaultInfo storage vaultInfo = vaults[vault];
 
@@ -105,7 +105,7 @@ contract MerlinChef is IMerlinChef, OwnableUpgradeable {
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    function addVault(address vault, address token, uint allocPoint) public onlyOwner {
+    function addVault(address vault, address token, uint allocPoint) external onlyOwner {
         require(vaults[vault].token == address(0), "MerlinChef: vault is already set");
         bulkUpdateRewards();
 
@@ -115,7 +115,7 @@ contract MerlinChef is IMerlinChef, OwnableUpgradeable {
         _vaultList.push(vault);
     }
 
-    function updateVault(address vault, uint allocPoint) public onlyOwner {
+    function updateVault(address vault, uint allocPoint) external onlyOwner {
         require(vaults[vault].token != address(0), "MerlinChef: vault must be set");
         bulkUpdateRewards();
 

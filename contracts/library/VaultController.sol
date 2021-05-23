@@ -35,12 +35,26 @@ abstract contract VaultController is IVaultController, PausableUpgradeable, Whit
     /* ========== Event ========== */
 
     event Recovered(address token, uint amount);
+    event KeeperChanged(address newKeeper);
 
 
     /* ========== MODIFIERS ========== */
 
     modifier onlyKeeper {
         require(msg.sender == keeper || msg.sender == owner(), 'VaultController: caller is not the owner or keeper');
+        _;
+    }
+
+    modifier nonContract {
+        uint32 size;
+        address callerAddress = msg.sender;
+        // CAUTION: extcodesize returns 0 if it is called from the constructor of a contract.
+        assembly { size := extcodesize(callerAddress) }
+
+        // CAUTION: Vitalik has suggested that developers should “NOT assume that tx.origin will continue to be usable or meaningful.”
+        // For the time-being, tx.origin is always an EOA, we know it cannot be a contract 
+        require (size == 0 && callerAddress == tx.origin, "only EOA");
+
         _;
     }
 
@@ -78,6 +92,8 @@ abstract contract VaultController is IVaultController, PausableUpgradeable, Whit
     function setKeeper(address _keeper) external onlyKeeper {
         require(_keeper != address(0), 'VaultController: invalid keeper address');
         keeper = _keeper;
+
+        emit KeeperChanged(keeper);
     }
 
     function setMinter(address newMinter) virtual public onlyOwner {
