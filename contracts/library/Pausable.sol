@@ -1,38 +1,34 @@
 // SPDX-License-Identifier: MIT
+pragma solidity ^0.6.12;
 
-pragma solidity 0.8.0;
+import "@pancakeswap/pancake-swap-lib/contracts/access/Ownable.sol";
 
-import "./Ownable.sol";
+abstract contract Pausable is Ownable {
+    uint public lastPauseTime;
+    bool public paused;
 
-contract Pausable is Ownable {
-    bool internal _paused;
+    event PauseChanged(bool isPaused);
 
-    event Paused();
-    event Unpaused();
-
-    modifier whenPaused() {
-        require(_paused, "Paused : This function can only be called when paused");
+    modifier notPaused {
+        require(!paused, "This action cannot be performed while the contract is paused");
         _;
     }
 
-    modifier whenNotPaused() {
-        require(!_paused, "Paused : This function can only be called when not paused");
-        _;
+    constructor() internal {
+        require(owner() != address(0), "Owner must be set");
     }
 
-    function pause() external onlyOwner whenNotPaused returns (bool success) {
-        _paused = true;
-        emit Paused();
-        success = true;
-    }
+    function setPaused(bool _paused) external onlyOwner {
+        if (_paused == paused) {
+            return;
+        }
 
-    function unPause() external onlyOwner whenPaused returns (bool success) {
-        _paused = false;
-        emit Unpaused();
-        success = true;
-    }
+        paused = _paused;
+        if (paused) {
+            lastPauseTime = now;
+        }
 
-    function paused() external view returns (bool) {
-        return _paused;
+        emit PauseChanged(paused);
     }
 }
+
