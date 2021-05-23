@@ -1,0 +1,39 @@
+{
+  "name": "mojito",
+  "version": "2.0.0",
+  "description": "audit single repository",
+  "scripts": {
+    "build": "npm run compile",
+    "compile": "npx hardhat compile",
+    "test": "NODE_OPTIONS='--max-old-space-size=4096' npx hardhat test",
+    "coverage": "NODE_OPTIONS='--max-old-space-size=4096' npx hardhat coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/haechi-labs/mojito.git"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "bignumber.js": "9.0.1",
+    "hardhat": "^2.0.6"
+  },
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.1",
+    "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "@nomiclabs/hardhat-web3": "^2.0.0",
+    "@types/chai": "^4.2.14",
+    "@types/mocha": "^8.0.3",
+    "@types/node": "^14.14.2",
+    "chai": "^4.2.0",
+    "coveralls": "3.1.0",
+    "eth-gas-reporter": "0.2.17",
+    "ethereum-waffle": "^3.2.0",
+    "ethers": "^5.0.19",
+    "hardhat-spdx-license-identifier": "^2.0.2",
+    "mocha-lcov-reporter": "1.3.0",
+    "solidity-coverage": "^0.7.12",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.0.3",
+    "web3": "^1.3.0"
+  }
+}
