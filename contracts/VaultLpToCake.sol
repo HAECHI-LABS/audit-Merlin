@@ -220,8 +220,11 @@ contract VaultLpToCake is VaultController, IStrategy, RewardsDistributionRecipie
         uint reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;
+
+            uint before = IBEP20(CAKE).balanceOf(address(this));
             _rewardsToken.withdraw(reward);
-            uint cakeBalance = IBEP20(CAKE).balanceOf(address(this));
+            uint cakeBalance = IBEP20(CAKE).balanceOf(address(this)).sub(before);
+
             uint performanceFee;
 
             if (canMint()) {
