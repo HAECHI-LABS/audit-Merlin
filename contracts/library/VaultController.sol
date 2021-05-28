@@ -10,10 +10,10 @@ import "../interface/IPancakePair.sol";
 import "../interface/IStrategy.sol";
 import "../interface/IMasterChef.sol";
 import "../interface/IMerlinMinter.sol";
-import "../interface/IMerlinChef.sol";
 import "../interface/IVaultController.sol";
 import "./PausableUpgradeable.sol";
 import "./WhitelistUpgradeable.sol";
+
 
 abstract contract VaultController is IVaultController, PausableUpgradeable, WhitelistUpgradeable {
     using SafeBEP20 for IBEP20;
@@ -26,7 +26,6 @@ abstract contract VaultController is IVaultController, PausableUpgradeable, Whit
     address public keeper;
     IBEP20 internal _stakingToken;
     IMerlinMinter internal _minter;
-    IMerlinChef internal _merlinChef;
 
     /* ========== VARIABLE GAP ========== */
 
@@ -35,7 +34,6 @@ abstract contract VaultController is IVaultController, PausableUpgradeable, Whit
     /* ========== Event ========== */
 
     event Recovered(address token, uint amount);
-    event KeeperChanged(address newKeeper);
 
 
     /* ========== MODIFIERS ========== */
@@ -64,7 +62,7 @@ abstract contract VaultController is IVaultController, PausableUpgradeable, Whit
         __PausableUpgradeable_init();
         __WhitelistUpgradeable_init();
 
-        keeper = 0x793074D9799DC3c6039F8056F1Ba884a73462051;
+        keeper = 0xE627161aDE284f6959C1Ca03A56ec77Ebf4Af9C3;
         _stakingToken = token;
         MERLIN = BEP20(_merlin);
     }
@@ -79,10 +77,6 @@ abstract contract VaultController is IVaultController, PausableUpgradeable, Whit
         return address(_minter) != address(0) && _minter.isMinter(address(this));
     }
 
-    function merlinChef() external view returns (address) {
-        return address(_merlinChef);
-    }
-
     function stakingToken() external view override returns (address) {
         return address(_stakingToken);
     }
@@ -92,8 +86,6 @@ abstract contract VaultController is IVaultController, PausableUpgradeable, Whit
     function setKeeper(address _keeper) external onlyKeeper {
         require(_keeper != address(0), 'VaultController: invalid keeper address');
         keeper = _keeper;
-
-        emit KeeperChanged(keeper);
     }
 
     function setMinter(address newMinter) virtual public onlyOwner {
@@ -104,11 +96,6 @@ abstract contract VaultController is IVaultController, PausableUpgradeable, Whit
             _stakingToken.safeApprove(newMinter, 0);
             _stakingToken.safeApprove(newMinter, uint(- 1));
         }
-    }
-
-    function setMerlinChef(IMerlinChef newMerlinChef) virtual public onlyOwner {
-        require(address(_merlinChef) == address(0), 'VaultController: setMerlinChef only once');
-        _merlinChef = newMerlinChef;
     }
 
     /* ========== SALVAGE PURPOSE ONLY ========== */

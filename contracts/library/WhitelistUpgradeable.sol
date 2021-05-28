@@ -5,7 +5,7 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 
 contract WhitelistUpgradeable is OwnableUpgradeable {
     mapping (address => bool) private _whitelist;
-    bool private _disable;                      // default - false means whitelist feature is working on. if true no more use of whitelist
+    bool private _disable;                      // default - true means whitelist feature is disabled.
 
     event Whitelisted(address indexed _address, bool whitelist);
     event EnableWhitelist();

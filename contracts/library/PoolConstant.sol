@@ -15,7 +15,7 @@ library PoolConstant {
         uint available;
         uint share;
         uint apyPool;
-        uint apyMerlin;
+        uint apyBunny;
         uint apyBorrow;
         uint tvl;
         uint utilized;
@@ -23,7 +23,7 @@ library PoolConstant {
         uint pUSD;
         uint pBNB;
         uint pBASE;
-        uint pMERLIN;
+        uint pMERL;
         uint pCAKE;
         uint depositedAt;
         uint feeDuration;

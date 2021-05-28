@@ -32,8 +32,8 @@ pragma solidity ^0.6.12;
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 */
 
-
-interface IPriceCalculator {
-    function pricesInUSD(address[] memory assets) external view returns (uint[] memory);
-    function valueOfAsset(address asset, uint amount) external view returns (uint valueInBNB, uint valueInUSD);
+interface IMVaultController {
+    function minter() external view returns (address);
+    function bunnyChef() external view returns (address);
+    function stakingToken() external view returns (address);
 }

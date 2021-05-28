@@ -7,10 +7,13 @@ import "@pancakeswap/pancake-swap-lib/contracts/token/BEP20/IBEP20.sol";
 import "@pancakeswap/pancake-swap-lib/contracts/token/BEP20/SafeBEP20.sol";
 import "@pancakeswap/pancake-swap-lib/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/math/Math.sol";
+// import "@openzeppelin/contracts/utils/Pausable.sol";
 
 import "./interface/IStakingRewards.sol";
 import "./interface/IStrategy.sol";
+import "./interface/IStrategyHelper.sol";
 import "./interface/IPancakeRouter02.sol";
+import "./interface/IZapBSC.sol";
 
 import "./library/Pausable.sol";
 import "./library/PoolConstant.sol";
@@ -26,11 +29,16 @@ contract MerlinPool is IStrategy, RewardsDistributionRecipient, ReentrancyGuard,
 
     IBEP20 public _rewardsToken;
     IBEP20 public  _stakingToken;
+    address public merlinBNB;
+    address public  WBNB;
     uint256 public periodFinish = 0;
     uint256 public rewardRate = 0;
     uint256 public rewardsDuration = 90 days;
     uint256 public lastUpdateTime;
     uint256 public rewardPerTokenStored;
+    IZapBSC public zapBSC;
+    address public BTCB;
+    address public ETH;
 
     mapping(address => uint256) public userRewardPerTokenPaid;
     mapping(address => uint256) public rewards;
@@ -48,16 +56,35 @@ contract MerlinPool is IStrategy, RewardsDistributionRecipient, ReentrancyGuard,
     PoolConstant.PoolTypes public constant override poolType = PoolConstant.PoolTypes.MerlinPool;
 
     /* ========== CONSTRUCTOR ========== */
-    constructor(address _merlin, address _router, address _priceCalc) public {
+    constructor(
+        address _merlin,
+        address _router,
+        address _priceCalc,
+        address _merlinBNB,
+        address _wbnb,
+        address _zapBSC,
+        address _btcb,
+        address _eth
+    ) public {
         _stakingToken = IBEP20(_merlin);
         ROUTER = IPancakeRouter02(_router);
         priceCalculator = PriceCalculatorBSC(_priceCalc);
+        merlinBNB = _merlinBNB;
+        WBNB = _wbnb;
+        zapBSC = IZapBSC(_zapBSC);
+        BTCB = _btcb;
+        ETH = _eth;
 
         rewardsDistribution = msg.sender;
 
         _stakePermission[msg.sender] = true;
 
         _stakingToken.safeApprove(address(ROUTER), uint(~0));
+
+        IBEP20(WBNB).safeApprove(address(ROUTER), uint(~0));
+        IBEP20(_btcb).safeApprove(address(ROUTER), uint(~0));
+        IBEP20(_eth).safeApprove(address(ROUTER), uint(~0));
+
     }
 
     /* ========== VIEWS ========== */
@@ -80,7 +107,7 @@ contract MerlinPool is IStrategy, RewardsDistributionRecipient, ReentrancyGuard,
 
     function withdrawableBalanceOf(address account) override public view returns (uint) {
             return _balances[account];
-    }   
+    }
 
     function profitOf(address account) public view returns (uint _usd, uint _merlin, uint _bnb) {
         _usd = 0;
@@ -168,10 +195,68 @@ contract MerlinPool is IStrategy, RewardsDistributionRecipient, ReentrancyGuard,
         uint256 reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;
+            reward = _flipToWBNB(reward);
             IBEP20(ROUTER.WETH()).safeTransfer(msg.sender, reward);
             emit RewardPaid(msg.sender, reward);
         }
     }
+
+    function getRewardInBTC() public nonReentrant updateReward(msg.sender) {
+        uint256 reward = rewards[msg.sender];
+
+        if (reward > 0) {
+            rewards[msg.sender] = 0;
+            reward = _flipToWBNB(reward);
+
+            address[] memory path = new address[](2);
+            path[0] = WBNB;
+            path[1] = BTCB;
+            ROUTER.swapExactTokensForTokens(reward, 0, path, address(this), block.timestamp);
+
+            reward = IBEP20(BTCB).balanceOf(address(this));
+
+            if (reward > 0) {
+              IBEP20(BTCB).safeTransfer(msg.sender, reward);
+              emit RewardPaid(msg.sender, reward);
+            }
+        }
+    }
+
+    function getRewardInETH() public nonReentrant updateReward(msg.sender) {
+        uint256 reward = rewards[msg.sender];
+
+        if (reward > 0) {
+            rewards[msg.sender] = 0;
+            reward = _flipToWBNB(reward);
+
+            address[] memory path = new address[](2);
+            path[0] = WBNB;
+            path[1] = ETH;
+            ROUTER.swapExactTokensForTokens(reward, 0, path, address(this), block.timestamp);
+
+            reward = IBEP20(ETH).balanceOf(address(this));
+
+
+            if (reward > 0) {
+              IBEP20(ETH).safeTransfer(msg.sender, reward);
+              emit RewardPaid(msg.sender, reward);
+            }
+        }
+    }
+
+    function _flipToWBNB(uint amount) private returns(uint reward) {
+        address wbnb = ROUTER.WETH();
+        (uint rewardMerlin,) = ROUTER.removeLiquidity(
+            address(_stakingToken), wbnb,
+            amount, 0, 0, address(this), block.timestamp);
+        address[] memory path = new address[](2);
+        path[0] = address(_stakingToken);
+        path[1] = wbnb;
+        ROUTER.swapExactTokensForTokens(rewardMerlin, 0, path, address(this), block.timestamp);
+
+        reward = IBEP20(wbnb).balanceOf(address(this));
+    }
+
 
     function harvest() override external {}
 
@@ -203,8 +288,7 @@ contract MerlinPool is IStrategy, RewardsDistributionRecipient, ReentrancyGuard,
 
     /* ========== RESTRICTED FUNCTIONS ========== */
     function setRewardsToken(address __rewardsToken) external onlyOwner {
-        require(address(__rewardsToken) == address(0), "set rewards token already");
-
+        require(address(__rewardsToken) != address(0), "set rewards token already");
         _rewardsToken = IBEP20(__rewardsToken);
         IBEP20(_rewardsToken).safeApprove(address(ROUTER), uint(~0));
     }

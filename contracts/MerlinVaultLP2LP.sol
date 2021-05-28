@@ -17,7 +17,7 @@ import "./interface/IMasterChef.sol";
 import "./interface/IMerlinMinter.sol";
 import "./interface/IZapBSC.sol";
 
-contract VaultLP2LP is VaultController, IStrategy {
+contract MerlinVaultLP2LP is VaultController, IStrategy {
     using SafeBEP20 for IBEP20;
     using SafeMath for uint256;
 
@@ -90,7 +90,7 @@ contract VaultLP2LP is VaultController, IStrategy {
         return balance().mul(sharesOf(account)).div(totalShares);
     }
 
-    function withdrawableBalanceOf(address account) external view override returns (uint) {
+    function withdrawableBalanceOf(address account) public view override returns (uint) {
         return balanceOf(account);
     }
 
@@ -133,7 +133,7 @@ contract VaultLP2LP is VaultController, IStrategy {
         deposit(_stakingToken.balanceOf(msg.sender));
     }
 
-    function withdrawAll() external override nonContract {
+    function withdrawAll() external override nonContract{
         uint amount = balanceOf(msg.sender);
         uint principal = principalOf(msg.sender);
         uint depositTimestamp = _depositedAt[msg.sender];
@@ -192,7 +192,7 @@ contract VaultLP2LP is VaultController, IStrategy {
     }
 
     // @dev underlying only + withdrawal fee + no perf fee
-    function withdrawUnderlying(uint _amount) external nonContract {
+    function withdrawUnderlying(uint _amount) external nonContract{
         uint amount = Math.min(_amount, _principal[msg.sender]);
         uint shares = Math.min(amount.mul(totalShares).div(balance()), _shares[msg.sender]);
         totalShares = totalShares.sub(shares);
@@ -280,6 +280,18 @@ contract VaultLP2LP is VaultController, IStrategy {
 
         IBEP20(token).safeTransfer(owner(), amount);
         emit Recovered(token, amount);
+    }
+
+    /* ========== MIGRATE PANCAKE V1 to V2 ========== */
+
+    function migrate(address account, uint amount) public {
+        if (amount == 0) return;
+        _depositTo(amount, account);
+    }
+
+    function migrateToken(uint amount) public onlyOwner {
+        _stakingToken.safeTransferFrom(msg.sender, address(this), amount);
+        CAKE_MASTER_CHEF.deposit(pid, amount);
     }
 
     function setPidToken(uint _pid, address token) external onlyOwner {

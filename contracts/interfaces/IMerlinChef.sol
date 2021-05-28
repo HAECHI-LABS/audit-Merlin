@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+
 pragma solidity ^0.6.12;
 pragma experimental ABIEncoderV2;
 
@@ -12,9 +13,9 @@ interface IMerlinChef {
 
     struct VaultInfo {
         address token;
-        uint allocPoint;       // How many allocation points assigned to this pool. Merlins to distribute per block.
-        uint lastRewardBlock;  // Last block number that Merlins distribution occurs.
-        uint accMerlinPerShare; // Accumulated Merlins per share, times 1e12. See below.
+        uint allocPoint;       // How many allocation points assigned to this pool. MERLs to distribute per block.
+        uint lastRewardBlock;  // Last block number that MERLs distribution occurs.
+        uint accMerlinPerShare; // Accumulated MERLs per share, times 1e12. See below.
     }
 
     function merlinPerBlock() external view returns (uint);
