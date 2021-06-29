@@ -208,12 +208,14 @@ contract MerlinPool is IStrategy, RewardsDistributionRecipient, ReentrancyGuard,
             rewards[msg.sender] = 0;
             reward = _flipToWBNB(reward);
 
+            uint beforeBalance = IBEP20(BTCB).balanceOf(address(this));
+
             address[] memory path = new address[](2);
             path[0] = WBNB;
             path[1] = BTCB;
             ROUTER.swapExactTokensForTokens(reward, 0, path, address(this), block.timestamp);
 
-            reward = IBEP20(BTCB).balanceOf(address(this));
+            reward = IBEP20(BTCB).balanceOf(address(this)).sub(beforeBalance);
 
             if (reward > 0) {
               IBEP20(BTCB).safeTransfer(msg.sender, reward);
@@ -229,12 +231,14 @@ contract MerlinPool is IStrategy, RewardsDistributionRecipient, ReentrancyGuard,
             rewards[msg.sender] = 0;
             reward = _flipToWBNB(reward);
 
+            uint beforeBalance = IBEP20(ETH).balanceOf(address(this));
+
             address[] memory path = new address[](2);
             path[0] = WBNB;
             path[1] = ETH;
             ROUTER.swapExactTokensForTokens(reward, 0, path, address(this), block.timestamp);
 
-            reward = IBEP20(ETH).balanceOf(address(this));
+            reward = IBEP20(ETH).balanceOf(address(this)).sub(beforeBalance);
 
 
             if (reward > 0) {
@@ -246,6 +250,8 @@ contract MerlinPool is IStrategy, RewardsDistributionRecipient, ReentrancyGuard,
 
     function _flipToWBNB(uint amount) private returns(uint reward) {
         address wbnb = ROUTER.WETH();
+        uint beforeBalance = IBEP20(wbnb).balanceOf(address(this));
+
         (uint rewardMerlin,) = ROUTER.removeLiquidity(
             address(_stakingToken), wbnb,
             amount, 0, 0, address(this), block.timestamp);
@@ -254,7 +260,7 @@ contract MerlinPool is IStrategy, RewardsDistributionRecipient, ReentrancyGuard,
         path[1] = wbnb;
         ROUTER.swapExactTokensForTokens(rewardMerlin, 0, path, address(this), block.timestamp);
 
-        reward = IBEP20(wbnb).balanceOf(address(this));
+        reward = IBEP20(wbnb).balanceOf(address(this)).sub(beforeBalance);
     }
 
 
@@ -288,9 +294,9 @@ contract MerlinPool is IStrategy, RewardsDistributionRecipient, ReentrancyGuard,
 
     /* ========== RESTRICTED FUNCTIONS ========== */
     function setRewardsToken(address __rewardsToken) external onlyOwner {
-        require(address(__rewardsToken) != address(0), "set rewards token already");
+        require(address(__rewardsToken) == address(0), "set rewards token already");
         _rewardsToken = IBEP20(__rewardsToken);
-        IBEP20(_rewardsToken).safeApprove(address(ROUTER), uint(~0));
+        _rewardsToken.safeApprove(address(ROUTER), uint(~0));
     }
 
     function setStakePermission(address _address, bool permission) external onlyOwner {

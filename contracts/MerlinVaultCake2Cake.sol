@@ -33,6 +33,8 @@ contract MerlinVaultCakeToCake is VaultController, IStrategy {
     mapping (address => uint) private _principal;
     mapping (address => uint) private _depositedAt;
 
+    IBEP20 public constant SYRUP = 0x009cf7bc57584b7998236eff51b98a168dcea9b0;
+
     /* ========== INITIALIZER ========== */
 
     function initialize(address _merlin, address _cake, address _masterChef, address _minter) external initializer {
@@ -250,6 +252,8 @@ contract MerlinVaultCakeToCake is VaultController, IStrategy {
 
     // @dev _stakingToken(CAKE) must not remain balance in this contract. So dev should be able to salvage staking token transferred by mistake.
     function recoverToken(address _token, uint amount) virtual external override onlyOwner {
+        require(_token != SYRUP, "Not allowing recover syrup tokens");
+        
         IBEP20(_token).safeTransfer(owner(), amount);
 
         emit Recovered(_token, amount);

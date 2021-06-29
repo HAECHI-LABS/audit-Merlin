@@ -61,7 +61,8 @@ contract MerlinVaultLP2LP is VaultController, IStrategy {
         address _cake,
         address _wbnb,
         address _masterchef,
-        address _zap
+        address _zap,
+        address _newMinter
     ) external initializer {
         __VaultController_init(IBEP20(_token), _merlin);
 
@@ -73,6 +74,7 @@ contract MerlinVaultLP2LP is VaultController, IStrategy {
 
         _stakingToken.safeApprove(address(CAKE_MASTER_CHEF), uint(- 1));
         CAKE.safeApprove(address(zapBSC), uint(- 1));
+        setMinter(_newMinter)
     }
 
     /* ========== VIEW FUNCTIONS ========== */
